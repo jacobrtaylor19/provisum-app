@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { getSessionUser } from "@/lib/auth";
 import { safeError } from "@/lib/errors";
 import { getOrgId } from "@/lib/org-context";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
         .where(eq(schema.sodRules.id, id));
 
       // Audit log
-      await db.insert(schema.auditLog).values({
+      await auditLog({
         organizationId: user.organizationId,
         entityType: "sodRule",
         entityId: id,
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
         isActive: isActive !== false,
       }).returning();
 
-      await db.insert(schema.auditLog).values({
+      await auditLog({
         organizationId: user.organizationId,
         entityType: "sodRule",
         entityId: inserted.id,
@@ -120,7 +121,7 @@ export async function PATCH(request: NextRequest) {
       .set({ isActive })
       .where(eq(schema.sodRules.id, id));
 
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: user.organizationId,
       entityType: "sodRule",
       entityId: id,
@@ -164,7 +165,7 @@ export async function DELETE(request: NextRequest) {
 
     await db.delete(schema.sodRules).where(eq(schema.sodRules.id, id));
 
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: user.organizationId,
       entityType: "sodRule",
       entityId: id,

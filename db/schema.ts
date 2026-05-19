@@ -1,4 +1,4 @@
-import { pgTable, text, integer, real, serial, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, serial, boolean, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // ─────────────────────────────────────────────
@@ -1075,6 +1075,9 @@ export const evidencePackageRuns = pgTable("evidence_package_runs", {
   personaCount: integer("persona_count").notNull().default(0),
   assignmentCount: integer("assignment_count").notNull().default(0),
   sodConflictCount: integer("sod_conflict_count").notNull().default(0),
+  // SHA-256 hex digest of the generated Excel payload — set by emitIntegrityHash()
+  // after generation. Null on legacy rows created before A1.1.
+  hash: text("hash"),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
@@ -1134,4 +1137,52 @@ export const provisioningRequests = pgTable("provisioning_requests", {
   workflowRunId: text("workflow_run_id"),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+// ─────────────────────────────────────────────
+// APPEND-ONLY HISTORY TABLES (A1.2 — defensibility chassis)
+//
+// These tables capture point-in-time snapshots of evidence-persistent rows
+// on every INSERT, UPDATE, and DELETE via Postgres triggers. They enable:
+//   - "What was the state of assignment X at go-live date Y?" queries
+//   - Proof that an approved mapping was not altered post-approval
+//   - The getStateAsOf() query helper in lib/history.ts
+//
+// UUID PKs per Cursus schema alignment (docs/Provisum_Cursus_Architectural_Alignment.md).
+// The live tables retain their serial PKs; only the history tables use UUIDs.
+//
+// DO NOT INSERT INTO these tables directly. The Postgres triggers on the live
+// tables populate them automatically. Read-only from application code.
+// ─────────────────────────────────────────────
+
+export const userPersonaAssignmentsHistory = pgTable("user_persona_assignments_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  originalRowId: integer("original_row_id").notNull(),
+  orgId: integer("org_id").notNull(),
+  // JSON snapshot of the full live row at the moment of change
+  snapshotJson: text("snapshot_json").notNull(),
+  changedBy: text("changed_by").notNull().default("system"),
+  changedAt: text("changed_at").notNull().$defaultFn(() => new Date().toISOString()),
+  // insert | update | delete
+  changeKind: text("change_kind").notNull(),
+});
+
+export const personaTargetRoleMappingsHistory = pgTable("persona_target_role_mappings_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  originalRowId: integer("original_row_id").notNull(),
+  orgId: integer("org_id").notNull(),
+  snapshotJson: text("snapshot_json").notNull(),
+  changedBy: text("changed_by").notNull().default("system"),
+  changedAt: text("changed_at").notNull().$defaultFn(() => new Date().toISOString()),
+  changeKind: text("change_kind").notNull(),
+});
+
+export const sodConflictsHistory = pgTable("sod_conflicts_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  originalRowId: integer("original_row_id").notNull(),
+  orgId: integer("org_id").notNull(),
+  snapshotJson: text("snapshot_json").notNull(),
+  changedBy: text("changed_by").notNull().default("system"),
+  changedAt: text("changed_at").notNull().$defaultFn(() => new Date().toISOString()),
+  changeKind: text("change_kind").notNull(),
 });

@@ -7,6 +7,7 @@ import { reportError } from "@/lib/monitoring";
 import { waitUntil } from "@vercel/functions";
 import { getSessionUser } from "@/lib/auth";
 import { getOrgId } from "@/lib/org-context";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -181,13 +182,13 @@ export async function POST() {
         completedAt: new Date().toISOString(),
       }).where(eq(schema.processingJobs.id, job.id));
 
-      await db.insert(schema.auditLog).values({
+      await auditLog({
         organizationId: orgId,
         entityType: "processingJob",
         entityId: job.id,
         action: "persona_assignment_completed",
-        newValue: JSON.stringify({ usersAssigned, failed }),
         actorEmail: user.email ?? user.username,
+        newValue: JSON.stringify({ usersAssigned, failed }),
       });
 
       return { jobId: job.id, usersAssigned, failed };

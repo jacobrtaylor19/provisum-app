@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { validateApiKey } from "@/lib/integration-auth";
 import { safeError } from "@/lib/errors";
 import { reportError, reportMessage } from "@/lib/monitoring";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -161,7 +162,7 @@ export async function POST(request: Request) {
     });
 
     // 10. Audit log
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: org.id,
       entityType: "organization",
       entityId: org.id,

@@ -4,6 +4,7 @@ import * as schema from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getSessionUser } from "@/lib/auth";
 import { safeError } from "@/lib/errors";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Audit log
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: user.organizationId,
       entityType: "sodConflict",
       entityId: conflictId,

@@ -6,6 +6,7 @@ import { safeError } from "@/lib/errors";
 import { getSessionUser } from "@/lib/auth";
 import { MAPPER_ROLES } from "@/lib/constants";
 import { getOrgId } from "@/lib/org-context";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -62,14 +63,14 @@ export async function PUT(req: NextRequest) {
     }
 
     // Log action
-    await db.insert(schema.auditLog)
-      .values({
-        organizationId: getOrgId(user),
-        entityType: "personaTargetRoleMapping",
-        entityId: personaId,
-        action: "manual_mapping_updated",
-        newValue: JSON.stringify({ personaId, targetRoleIds }),
-      });
+    await auditLog({
+      organizationId: getOrgId(user),
+      entityType: "personaTargetRoleMapping",
+      entityId: personaId,
+      action: "manual_mapping_updated",
+      actorEmail: user.email ?? user.username,
+      newValue: JSON.stringify({ personaId, targetRoleIds }),
+    });
 
     return NextResponse.json({ success: true, personaId, roleCount: targetRoleIds.length });
   } catch (err: unknown) {

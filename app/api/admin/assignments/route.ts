@@ -4,6 +4,7 @@ import * as schema from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getSessionUser } from "@/lib/auth";
 import { safeError } from "@/lib/errors";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
       scopeValue,
     }).returning();
 
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: user.organizationId,
       entityType: "workAssignment",
       entityId: created.id,
@@ -92,7 +93,7 @@ export async function PUT(req: NextRequest) {
       .set({ appUserId, scopeType, scopeValue })
       .where(eq(schema.workAssignments.id, Number(id)));
 
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: user.organizationId,
       entityType: "workAssignment",
       entityId: Number(id),
@@ -123,7 +124,7 @@ export async function DELETE(req: NextRequest) {
 
   await db.delete(schema.workAssignments).where(eq(schema.workAssignments.id, Number(id)));
 
-  await db.insert(schema.auditLog).values({
+  await auditLog({
     organizationId: user.organizationId,
     entityType: "workAssignment",
     entityId: Number(id),

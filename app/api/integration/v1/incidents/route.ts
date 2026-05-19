@@ -18,6 +18,7 @@ import { validateApiKey } from "@/lib/integration-auth";
 import { reportError } from "@/lib/monitoring";
 import { scrubNullableString, scrubJson } from "@/lib/integration/pii-scrub";
 import { SYSTEM_ORG_ID } from "@/lib/incidents/detection";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -186,7 +187,7 @@ export async function GET(request: Request) {
 
     // SOC 2 / CC6.1 — record every external read so an auditor can answer
     // "who pulled what when". Awaited so audit failures fail the request.
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: orgFilter ?? SYSTEM_ORG_ID,
       entityType: "integration",
       entityId: 0,

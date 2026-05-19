@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { safeError } from "@/lib/errors";
 import { reportError } from "@/lib/monitoring";
 import { checkLoginRate } from "@/lib/rate-limit-middleware";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (!appUser || !appUser.supabaseAuthId) {
-      await db.insert(schema.auditLog).values({
+      await auditLog({
         organizationId: 1,
         entityType: "auth",
         entityId: 0,
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest) {
 
     if (signInError) {
       // Audit log failed attempt
-      await db.insert(schema.auditLog).values({
+      await auditLog({
         organizationId: appUser.organizationId,
         entityType: "auth",
         entityId: appUser.id,
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Audit log successful login
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: appUser.organizationId ?? 1,
       entityType: "auth",
       entityId: appUser.id,

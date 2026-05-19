@@ -6,6 +6,7 @@ import { safeError } from "@/lib/errors";
 import { getSessionUser } from "@/lib/auth";
 import { checkBulkRate } from "@/lib/rate-limit-middleware";
 import { dispatchWebhookEvent } from "@/lib/webhooks";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date().toISOString(),
     }).where(eq(schema.userTargetRoleAssignments.id, assignmentId));
 
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: user.organizationId,
       entityType: "userTargetRoleAssignment",
       entityId: assignmentId,

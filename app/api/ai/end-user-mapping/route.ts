@@ -7,6 +7,7 @@ import { getSessionUser } from "@/lib/auth";
 import { checkAIRate } from "@/lib/rate-limit-middleware";
 import { MAPPER_ROLES } from "@/lib/constants";
 import { waitUntil } from "@vercel/functions";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -107,11 +108,12 @@ export async function POST(req: NextRequest) {
         completedAt: new Date().toISOString(),
       }).where(eq(schema.processingJobs.id, job.id));
 
-      await db.insert(schema.auditLog).values({
+      await auditLog({
         organizationId: user.organizationId,
         entityType: "processingJob",
         entityId: job.id,
         action: "end_user_mapping_completed",
+        actorEmail: user.email ?? user.username,
         newValue: JSON.stringify({ usersProcessed: userAssignments.length, assignmentsCreated: created, overridesPreserved }),
       });
 

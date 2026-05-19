@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getOrgId } from "@/lib/org-context";
 import { generateEvidencePackage } from "@/lib/exports/evidence-package";
+import { emitIntegrityHash } from "@/lib/exports/integrity";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 
@@ -45,8 +46,8 @@ export async function POST(req: NextRequest) {
     generatedByUsername: user.username,
   });
 
-  // Record the run
-  await db.insert(schema.evidencePackageRuns).values({
+  // Record the run (capture ID for hash persistence)
+  const [run] = await db.insert(schema.evidencePackageRuns).values({
     organizationId: orgId,
     releaseId: releaseId ?? null,
     generatedByUserId: user.id,
@@ -57,7 +58,12 @@ export async function POST(req: NextRequest) {
     personaCount: stats.personaCount,
     assignmentCount: stats.assignmentCount,
     sodConflictCount: stats.sodConflictCount,
-  });
+  }).returning({ id: schema.evidencePackageRuns.id });
+
+  // Compute and persist SHA-256 content digest.
+  // The hash is returned in the X-Content-Hash response header so the
+  // downloader can verify the file hasn't been tampered with.
+  const { hash } = await emitIntegrityHash(buffer, run?.id);
 
   const filename = `Provisum_${framework === "sox_404" ? "SOX404" : "SOC2"}_Evidence_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
@@ -66,6 +72,8 @@ export async function POST(req: NextRequest) {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename="${filename}"`,
+      "X-Content-Hash": `sha256:${hash}`,
+      "X-Content-Hash-Algorithm": "sha256",
     },
   });
 }

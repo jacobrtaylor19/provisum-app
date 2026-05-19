@@ -6,6 +6,7 @@ import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getSessionUser } from "@/lib/auth";
 import { getOrgId } from "@/lib/org-context";
+import { auditLog } from "@/lib/audit";
 
 export async function updatePersona(
   personaId: number,
@@ -39,16 +40,15 @@ export async function updatePersona(
     })
     .where(eq(schema.personas.id, personaId));
 
-  await db.insert(schema.auditLog)
-    .values({
-      organizationId: getOrgId(user),
-      entityType: "persona",
-      entityId: personaId,
-      action: "updated",
-      oldValue: JSON.stringify(oldValue),
-      newValue: JSON.stringify(updates),
-      actorEmail: user.email ?? user.username,
-    });
+  await auditLog({
+    organizationId: getOrgId(user),
+    entityType: "persona",
+    entityId: personaId,
+    action: "updated",
+    oldValue: JSON.stringify(oldValue),
+    newValue: JSON.stringify(updates),
+    actorEmail: user.email ?? user.username,
+  });
 
   revalidatePath(`/personas/${personaId}`);
   revalidatePath("/personas");
@@ -97,16 +97,15 @@ export async function updatePersonaUsers(
       });
   }
 
-  await db.insert(schema.auditLog)
-    .values({
-      organizationId: getOrgId(user),
-      entityType: "persona",
-      entityId: personaId,
-      action: "users_updated",
-      oldValue: JSON.stringify(current),
-      newValue: JSON.stringify(userIds),
-      actorEmail: user.email ?? user.username,
-    });
+  await auditLog({
+    organizationId: getOrgId(user),
+    entityType: "persona",
+    entityId: personaId,
+    action: "users_updated",
+    oldValue: JSON.stringify(current),
+    newValue: JSON.stringify(userIds),
+    actorEmail: user.email ?? user.username,
+  });
 
   revalidatePath(`/personas/${personaId}`);
   revalidatePath("/personas");
@@ -149,16 +148,15 @@ export async function updatePersonaTargetRoles(
       });
   }
 
-  await db.insert(schema.auditLog)
-    .values({
-      organizationId: getOrgId(user),
-      entityType: "persona",
-      entityId: personaId,
-      action: "target_roles_updated",
-      oldValue: JSON.stringify(current),
-      newValue: JSON.stringify(targetRoleIds),
-      actorEmail: user.email ?? user.username,
-    });
+  await auditLog({
+    organizationId: getOrgId(user),
+    entityType: "persona",
+    entityId: personaId,
+    action: "target_roles_updated",
+    oldValue: JSON.stringify(current),
+    newValue: JSON.stringify(targetRoleIds),
+    actorEmail: user.email ?? user.username,
+  });
 
   revalidatePath(`/personas/${personaId}`);
   revalidatePath("/personas");

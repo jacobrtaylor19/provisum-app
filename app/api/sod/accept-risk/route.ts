@@ -5,6 +5,7 @@ import { eq, and, inArray } from "drizzle-orm";
 import { getSessionUser } from "@/lib/auth";
 import { getSetting } from "@/lib/settings";
 import { safeError } from "@/lib/errors";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
           : `[REJECTED by ${user.username}]: ${justification ?? "No reason provided"}`,
       }).where(eq(schema.sodConflicts.id, conflictId));
 
-      await db.insert(schema.auditLog).values({
+      await auditLog({
         organizationId: user.organizationId,
         entityType: "sodConflict",
         entityId: conflictId,
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest) {
       ));
     }
 
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: user.organizationId,
       entityType: "sodConflict",
       entityId: conflictId,

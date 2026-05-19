@@ -4,6 +4,7 @@ import * as schema from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { getSessionUser } from "@/lib/auth";
 import { getOrgId } from "@/lib/org-context";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -55,16 +56,15 @@ export async function POST(req: Request) {
     .where(eq(schema.personaConfirmations.id, existing.id));
 
   // Audit log
-  await db.insert(schema.auditLog)
-    .values({
-      organizationId: getOrgId(user),
-      entityType: "personaConfirmation",
-      entityId: existing.id,
-      action: "persona_confirmation_reset",
-      oldValue: JSON.stringify({ confirmedBy: existing.confirmedBy, confirmedAt: existing.confirmedAt }),
-      newValue: JSON.stringify({ resetBy: user.id, resetAt: now }),
-      actorEmail: user.email ?? user.username,
-    });
+  await auditLog({
+    organizationId: getOrgId(user),
+    entityType: "personaConfirmation",
+    entityId: existing.id,
+    action: "persona_confirmation_reset",
+    oldValue: JSON.stringify({ confirmedBy: existing.confirmedBy, confirmedAt: existing.confirmedAt }),
+    newValue: JSON.stringify({ resetBy: user.id, resetAt: now }),
+    actorEmail: user.email ?? user.username,
+  });
 
   return NextResponse.json({ success: true });
 }

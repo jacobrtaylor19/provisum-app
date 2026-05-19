@@ -3,13 +3,27 @@
 This file gives Claude Code the context needed to work effectively in this codebase. Read before making changes.
 
 > **Documentation index:** For a full map of all project docs (specs, PRDs, testing, deployment, archive), see `DOC_INDEX.md` in the project root (`AI Role Mapping Tool/DOC_INDEX.md`).
-> **Session state:** Check `CLAUDE_CODE_ONGOING_UPDATES.md` for the latest build state, known issues, and recent changes.
+
+## Planning & Work Tracking
+
+**Source of truth:** the management suite (https://dashboard-pied-kappa-81.vercel.app) — this project has its own section on Backlog / Board / Sprints / Roadmap / Projects. **Do not create local planning docs** (ROADMAP.md, TODO.md, HANDOFF.md); archived copies live in `docs/archive/`.
+
+**At session start:** call `get_session_playbook()` first — it returns the canonical workflow rules (vocabulary, rituals, "update MS" sync) from the management suite. That playbook is authoritative; this file is just a pointer.
+
+**Then orient:**
+`get_project_info()` → `list_my_work()` → `list_sprints({status:"active"})`.
+
+**At session end:** if jacob says "update MS" (or use the `/update-ms` slash command), run the sync pass from section E of the playbook.
+
+**`pm` MCP** is registered in `.mcp.json` (one level above `airm/`, at `AI Role Mapping Tool/.mcp.json`) with a project-scoped bearer token. Approved via `enabledMcpjsonServers` in `.claude/settings.local.json`. The token is secret; `.mcp.json` is not tracked by git.
+
+**Never fabricate.** Every work item must trace to a commit, conversation, or codebase signal.
 
 ---
 
 ## What this project is
 
-Provisum (formerly AIRM) is a **Next.js 14** web tool for enterprise role migration projects (e.g. SAP ECC → S/4HANA). It manages the full workflow: upload source data → AI persona generation → role mapping → SOD conflict analysis → approvals. It uses Supabase Auth with JWT sessions, 7 roles (including `project_manager`), and org-unit-based scoping. Multi-tenant org isolation is Phase 3 complete (`organization_id` NOT NULL on all entity tables). The `airm/` directory name is retained locally — display strings use "Provisum" everywhere. Schema has **57 tables** in Supabase Postgres. **Current version: v1.3.0** — deployed at https://demo.provisum.io (demo) and https://app.provisum.io (prod). Vercel projects: `provisum-demo`, `provisum-sandbox`, `provisum-prod` on team `team_fEadrGrB1ys7beUytc8Eh5bw`. The old `airm` Vercel project has been deleted.
+Provisum (formerly AIRM) is a **Next.js 14** web tool for enterprise role migration projects (e.g. SAP ECC → S/4HANA). It manages the full workflow: upload source data → AI persona generation → role mapping → SOD conflict analysis → approvals. It uses Supabase Auth with JWT sessions, 7 roles (including `project_manager`), and org-unit-based scoping. Multi-tenant org isolation is Phase 3 complete (`organization_id` NOT NULL on all entity tables). The `airm/` directory name is retained locally — display strings use "Provisum" everywhere. Schema has **57 tables** in Supabase Postgres. **Current version: v1.5.0** — deployed at https://demo.provisum.io (demo) and https://app.provisum.io (prod). Vercel projects: `provisum-demo`, `provisum-sandbox`, `provisum-prod` on team `team_fEadrGrB1ys7beUytc8Eh5bw`. The old `airm` Vercel project has been deleted.
 
 ---
 

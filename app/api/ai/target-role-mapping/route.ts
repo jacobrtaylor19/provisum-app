@@ -8,6 +8,7 @@ import { getUserScope } from "@/lib/scope";
 import { checkAIRate } from "@/lib/rate-limit-middleware";
 import { runWithRetry } from "@/lib/job-runner";
 import { waitUntil } from "@vercel/functions";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -54,11 +55,12 @@ export async function POST(req: NextRequest) {
       jobId: job.id,
       maxRetries: 2,
       onComplete: async () => {
-        await db.insert(schema.auditLog).values({
+        await auditLog({
           organizationId: user.organizationId,
           entityType: "processingJob",
           entityId: job.id,
           action: "target_role_mapping_completed",
+          actorEmail: user.email ?? user.username,
           newValue: JSON.stringify(mappingResult),
         });
       },

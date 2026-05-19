@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validatePassword } from "@/lib/password-policy";
 import { safeError } from "@/lib/errors";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
       .where(eq(schema.userInvites.id, invite.id));
 
     // Audit log
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: appUser.organizationId,
       entityType: "appUser",
       entityId: appUser.id,

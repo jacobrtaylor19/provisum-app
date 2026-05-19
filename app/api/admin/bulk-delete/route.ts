@@ -8,6 +8,7 @@ import { checkBulkRate } from "@/lib/rate-limit-middleware";
 import { validateBody } from "@/lib/validation";
 import { bulkDeleteSchema } from "@/lib/validation/admin";
 import { safeError } from "@/lib/errors";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -45,16 +46,15 @@ export async function POST(request: NextRequest) {
     await db.delete(table).where(inArray(table.id, ids));
 
     // Log each deletion to audit log
-    await db.insert(schema.auditLog)
-      .values({
-        organizationId: getOrgId(user),
-        entityType,
-        entityId: 0,
-        action: "bulk_deleted",
-        oldValue: JSON.stringify({ ids }),
-        newValue: JSON.stringify({ count: ids.length }),
-        actorEmail: user.email ?? user.username,
-      });
+    await auditLog({
+      organizationId: getOrgId(user),
+      entityType,
+      entityId: 0,
+      action: "bulk_deleted",
+      oldValue: JSON.stringify({ ids }),
+      newValue: JSON.stringify({ count: ids.length }),
+      actorEmail: user.email ?? user.username,
+    });
 
     return NextResponse.json({ deleted: ids.length });
   } catch (err: unknown) {

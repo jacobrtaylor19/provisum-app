@@ -4,6 +4,7 @@ import * as schema from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { getSessionUser } from "@/lib/auth";
 import { safeError } from "@/lib/errors";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -96,7 +97,7 @@ async function handleDepartmentApprove(department: string, actorEmail: string, o
   ).length;
 
   if (count > 0) {
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: orgId,
       entityType: "userTargetRoleAssignment",
       entityId: 0,
@@ -148,7 +149,7 @@ async function handleIdsApprove(assignmentIds: number[], actorEmail: string, org
   }
 
   if (count > 0) {
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: orgId,
       entityType: "userTargetRoleAssignment",
       entityId: 0,
@@ -190,7 +191,7 @@ async function handleLegacyBulkApprove(actorEmail: string, orgId: number) {
   }
 
   if (count > 0) {
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: orgId,
       entityType: "userTargetRoleAssignment",
       entityId: 0,

@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { getSessionUser } from "@/lib/auth";
 import { sendInviteEmail } from "@/lib/email";
 import { safeError } from "@/lib/errors";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     const emailResult = await sendInviteEmail(appUser.email, token, appUser.displayName);
 
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: user.organizationId,
       entityType: "appUser",
       entityId: appUserId,

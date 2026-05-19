@@ -7,6 +7,7 @@ import { getOrgId } from "@/lib/org-context";
 import { safeError } from "@/lib/errors";
 import { validatePassword } from "@/lib/password-policy";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest) {
       organizationId: getOrgId(user),
     }).returning();
 
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: user.organizationId,
       entityType: "appUser",
       entityId: created.id,

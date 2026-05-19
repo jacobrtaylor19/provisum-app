@@ -3,6 +3,7 @@ import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
 import { getOrgId } from "@/lib/org-context";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
     source: "manual",
   }).returning();
 
-  await db.insert(schema.auditLog).values({
+  await auditLog({
     organizationId: orgId,
     entityType: "persona",
     entityId: persona.id,

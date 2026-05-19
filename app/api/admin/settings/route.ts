@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getAllSettings, setSetting } from "@/lib/settings";
-import { db } from "@/db";
-import * as schema from "@/db/schema";
 import { validateBody } from "@/lib/validation";
 import { settingsSchema } from "@/lib/validation/admin";
 import { safeError } from "@/lib/errors";
 import { getOrgId } from "@/lib/org-context";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -36,16 +35,14 @@ export async function PUT(req: NextRequest) {
       await setSetting(key, String(value), user.username);
 
       // Audit log the setting change (key only, not the value)
-      await db.insert(schema.auditLog)
-        .values({
-          organizationId: getOrgId(user),
-          entityType: "system_setting",
-          entityId: 0,
-          action: "setting_updated",
-          oldValue: null,
-          newValue: key,
-          actorEmail: user.email || user.username,
-        });
+      await auditLog({
+        organizationId: getOrgId(user),
+        entityType: "system_setting",
+        entityId: 0,
+        action: "setting_updated",
+        newValue: key,
+        actorEmail: user.email || user.username,
+      });
     }
 
     return NextResponse.json({ success: true, updated: entries.length });

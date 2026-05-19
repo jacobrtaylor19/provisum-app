@@ -6,6 +6,7 @@ import { getOrgTree, getAllOrgUnits } from "@/lib/org-hierarchy";
 import { getSessionUser } from "@/lib/auth";
 import { safeError } from "@/lib/errors";
 import { getOrgId } from "@/lib/org-context";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -91,15 +92,14 @@ export async function POST(req: NextRequest) {
       .returning();
 
     // Audit log
-    await db.insert(schema.auditLog)
-      .values({
-        organizationId: getOrgId(user),
-        entityType: "orgUnit",
-        entityId: inserted.id,
-        action: "created",
-        newValue: JSON.stringify({ name, level, parentId, description }),
-        actorEmail: user.email ?? user.username,
-      });
+    await auditLog({
+      organizationId: getOrgId(user),
+      entityType: "orgUnit",
+      entityId: inserted.id,
+      action: "created",
+      newValue: JSON.stringify({ name, level, parentId, description }),
+      actorEmail: user.email ?? user.username,
+    });
 
     return NextResponse.json({ success: true, orgUnit: inserted });
   } catch (err: unknown) {
@@ -215,16 +215,15 @@ export async function PUT(req: NextRequest) {
     }
 
     // Audit log
-    await db.insert(schema.auditLog)
-      .values({
-        organizationId: getOrgId(user),
-        entityType: "orgUnit",
-        entityId: id,
-        action: "updated",
-        oldValue,
-        newValue: JSON.stringify({ name, description, parentId, assignedMapperId, assignedApproverId }),
-        actorEmail: user.email ?? user.username,
-      });
+    await auditLog({
+      organizationId: getOrgId(user),
+      entityType: "orgUnit",
+      entityId: id,
+      action: "updated",
+      oldValue,
+      newValue: JSON.stringify({ name, description, parentId, assignedMapperId, assignedApproverId }),
+      actorEmail: user.email ?? user.username,
+    });
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
@@ -284,15 +283,14 @@ export async function DELETE(req: NextRequest) {
     await db.delete(schema.orgUnits).where(eq(schema.orgUnits.id, id));
 
     // Audit log
-    await db.insert(schema.auditLog)
-      .values({
-        organizationId: getOrgId(user),
-        entityType: "orgUnit",
-        entityId: id,
-        action: "deleted",
-        oldValue: JSON.stringify(existing),
-        actorEmail: user.email ?? user.username,
-      });
+    await auditLog({
+      organizationId: getOrgId(user),
+      entityType: "orgUnit",
+      entityId: id,
+      action: "deleted",
+      oldValue: JSON.stringify(existing),
+      actorEmail: user.email ?? user.username,
+    });
 
     return NextResponse.json({
       success: true,

@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import * as schema from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
 import { getOrgId } from "@/lib/org-context";
 import { sendNotificationEmail } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +55,7 @@ export async function POST(request: Request) {
     const categoryLabel = CATEGORY_LABELS[category] || category;
 
     // Insert into audit log (support tickets are audit-worthy events)
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: orgId,
       entityType: "support",
       entityId: 0,
@@ -67,7 +66,7 @@ export async function POST(request: Request) {
         category,
         priority: effectivePriority,
       }),
-      actorEmail: user.email,
+      actorEmail: user.email ?? user.username,
     });
 
     // Send email to support@provisum.io

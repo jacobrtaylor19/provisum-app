@@ -10,6 +10,7 @@ import { sendInviteEmail } from "@/lib/email";
 import { safeError } from "@/lib/errors";
 import { getOrgId } from "@/lib/org-context";
 import { checkUserLimit } from "@/lib/license";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -185,7 +186,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Audit log
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: user.organizationId,
       entityType: "appUser",
       entityId: 0,

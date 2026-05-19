@@ -4,6 +4,7 @@ import * as schema from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { getSessionUser } from "@/lib/auth";
 import { getOrgId } from "@/lib/org-context";
+import { auditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -79,15 +80,14 @@ export async function POST(req: Request) {
     .returning();
 
   // Audit log
-  await db.insert(schema.auditLog)
-    .values({
-      organizationId: getOrgId(user),
-      entityType: "personaConfirmation",
-      entityId: row.id,
-      action: "persona_confirmed",
-      newValue: JSON.stringify({ orgUnitId, confirmedBy: user.id }),
-      actorEmail: user.email ?? user.username,
-    });
+  await auditLog({
+    organizationId: getOrgId(user),
+    entityType: "personaConfirmation",
+    entityId: row.id,
+    action: "persona_confirmed",
+    newValue: JSON.stringify({ orgUnitId, confirmedBy: user.id }),
+    actorEmail: user.email ?? user.username,
+  });
 
   return NextResponse.json({ success: true, confirmation: row });
 }

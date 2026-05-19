@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db";
-import * as schema from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
+import { auditLog } from "@/lib/audit";
 import { validatePassword } from "@/lib/password-policy";
 import { validateBody } from "@/lib/validation";
 import { changePasswordSchema } from "@/lib/validation/auth";
@@ -45,7 +44,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Audit log the change (no password values)
-    await db.insert(schema.auditLog).values({
+    await auditLog({
       organizationId: user.organizationId,
       entityType: "auth",
       entityId: user.id,

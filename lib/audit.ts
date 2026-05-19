@@ -20,6 +20,14 @@ export interface AuditEntry {
  * This is the single entry point for all audit logging.
  * All state-changing operations and security events should call this function.
  */
+/**
+ * CONVENTION: This is the ONLY place in the codebase that may call
+ * `db.insert(schema.auditLog)` directly. All other code must import
+ * and call `auditLog()` from this module.
+ *
+ * Acceptance test: grep -r "db.insert(schema.auditLog)" app/ lib/ --include="*.ts"
+ * should return ONLY this file.
+ */
 export async function auditLog(entry: AuditEntry): Promise<void> {
   try {
     await db.insert(schema.auditLog).values({
