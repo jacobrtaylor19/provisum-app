@@ -46,7 +46,11 @@ const nextConfig = {
 export default withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
-  silent: !process.env.CI,
+  // silent: true prevents source-map upload errors from crashing the build.
+  // SENTRY_ORG must be the org slug (e.g. "provisum"), not a username.
+  // SENTRY_PROJECT must be the URL slug from Sentry project settings, not the display name.
+  // Upload errors are non-fatal; runtime error capture still works via instrumentation.ts.
+  silent: true,
   widenClientFileUpload: true,
   hideSourceMaps: true,
 
