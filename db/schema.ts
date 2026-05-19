@@ -1186,3 +1186,31 @@ export const sodConflictsHistory = pgTable("sod_conflicts_history", {
   changedAt: text("changed_at").notNull().$defaultFn(() => new Date().toISOString()),
   changeKind: text("change_kind").notNull(),
 });
+
+// ─────────────────────────────────────────────
+// ADAPTER CREDENTIAL VAULT (#34)
+//
+// Per-org encrypted storage for target-system adapter credentials
+// (SAP username/password, Workday OAuth tokens, ServiceNow API keys, etc.).
+// Secrets are stored AES-256-GCM encrypted via lib/encryption.ts.
+// The plaintext is NEVER returned by any API — callers receive only metadata.
+// Credentials are decrypted in-process only at connection time.
+// ─────────────────────────────────────────────
+
+export const adapterCredentials = pgTable("adapter_credentials", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").notNull().references(() => organizations.id),
+  // Which adapter family these credentials are for
+  adapterType: text("adapter_type").notNull(), // 'sap_s4hana' | 'workday' | 'oracle_fusion' | 'servicenow'
+  // Human-friendly label, e.g. "Production SAP" or "HR Workday"
+  name: text("name").notNull(),
+  // AES-256-GCM encrypted JSON blob — never exposed via API
+  credentialsEnc: text("credentials_enc").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  // ISO 8601 timestamp of last connection test (nullable)
+  lastTestedAt: text("last_tested_at"),
+  // 'success' | 'failed' | null
+  lastTestStatus: text("last_test_status"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
