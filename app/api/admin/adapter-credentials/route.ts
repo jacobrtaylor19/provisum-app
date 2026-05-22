@@ -78,11 +78,10 @@ export async function POST(req: NextRequest) {
     const id = await storeCredential(orgId, adapterType as AdapterType, name.trim(), payload);
 
     await auditLog({
-      actorId: user.id,
       actorEmail: user.email ?? "unknown",
       action: "adapter_credential.created",
-      targetType: "adapter_credentials",
-      targetId: String(id),
+      entityType: "adapter_credentials",
+      entityId: id,
       organizationId: orgId,
       metadata: { adapterType, name },
     });

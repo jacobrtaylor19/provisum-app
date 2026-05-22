@@ -68,11 +68,10 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     await updateCredential(id, orgId, { name, payload, isActive });
 
     await auditLog({
-      actorId: user.id,
       actorEmail: user.email ?? "unknown",
       action: "adapter_credential.updated",
-      targetType: "adapter_credentials",
-      targetId: String(id),
+      entityType: "adapter_credentials",
+      entityId: id,
       organizationId: orgId,
       metadata: { updatedFields: Object.keys(body) },
     });
@@ -102,11 +101,10 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
     if (!deleted) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     await auditLog({
-      actorId: user.id,
       actorEmail: user.email ?? "unknown",
       action: "adapter_credential.deleted",
-      targetType: "adapter_credentials",
-      targetId: String(id),
+      entityType: "adapter_credentials",
+      entityId: id,
       organizationId: orgId,
     });
 

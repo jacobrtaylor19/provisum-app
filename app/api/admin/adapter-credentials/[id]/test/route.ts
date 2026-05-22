@@ -42,11 +42,10 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
     await recordTestResult(id, status);
 
     await auditLog({
-      actorId: user.id,
       actorEmail: user.email ?? "unknown",
       action: "adapter_credential.tested",
-      targetType: "adapter_credentials",
-      targetId: String(id),
+      entityType: "adapter_credentials",
+      entityId: id,
       organizationId: orgId,
       metadata: { adapterType: meta.adapterType, connected: result.connected },
     });
