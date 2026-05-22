@@ -17,7 +17,7 @@ import {
   type CredentialPayload,
 } from "@/lib/adapters/credentials";
 import { auditLog } from "@/lib/audit";
-import { reportError } from "@/lib/logger";
+import { reportError } from "@/lib/monitoring";
 
 type RouteParams = { params: { id: string } };
 

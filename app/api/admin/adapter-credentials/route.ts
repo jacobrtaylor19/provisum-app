@@ -15,7 +15,7 @@ import {
   type CredentialPayload,
 } from "@/lib/adapters/credentials";
 import { auditLog } from "@/lib/audit";
-import { reportError } from "@/lib/logger";
+import { reportError } from "@/lib/monitoring";
 
 const VALID_ADAPTER_TYPES: AdapterType[] = [
   "sap_s4hana",

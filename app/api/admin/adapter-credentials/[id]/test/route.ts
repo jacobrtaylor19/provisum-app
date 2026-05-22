@@ -14,7 +14,7 @@ import { getOrgId } from "@/lib/org-context";
 import { getCredentialMeta, getDecryptedCredentials, recordTestResult } from "@/lib/adapters/credentials";
 import { getAdapter } from "@/lib/adapters";
 import { auditLog } from "@/lib/audit";
-import { reportError } from "@/lib/logger";
+import { reportError } from "@/lib/monitoring";
 
 type RouteParams = { params: { id: string } };
 
