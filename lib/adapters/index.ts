@@ -17,11 +17,11 @@ import type { CredentialPayload } from "./credentials";
 type AdapterFactory = (config: CredentialPayload) => TargetSystemAdapter;
 
 const ADAPTER_TYPES: Record<string, AdapterFactory> = {
-  mock:           (_config) => new MockSapAdapter(),
-  sap_s4hana:    (_config) => new MockSapAdapter(), // TODO: replace with SapS4HanaAdapter
-  workday:        (_config) => new MockSapAdapter(), // TODO: replace with WorkdayAdapter
-  oracle_fusion:  (_config) => new MockSapAdapter(), // TODO: replace with OracleFusionAdapter
-  servicenow:    (_config) => new MockSapAdapter(), // TODO: replace with ServiceNowAdapter
+  mock:           (_) => new MockSapAdapter(),
+  sap_s4hana:    (_) => new MockSapAdapter(), // TODO: replace with SapS4HanaAdapter
+  workday:        (_) => new MockSapAdapter(), // TODO: replace with WorkdayAdapter
+  oracle_fusion:  (_) => new MockSapAdapter(), // TODO: replace with OracleFusionAdapter
+  servicenow:    (_) => new MockSapAdapter(), // TODO: replace with ServiceNowAdapter
 };
 
 /**

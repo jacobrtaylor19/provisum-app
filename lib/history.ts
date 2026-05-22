@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import * as schema from "@/db/schema";
-import { eq, lte, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 // ─────────────────────────────────────────────
 // POINT-IN-TIME HISTORY QUERY HELPER (A1.2)
