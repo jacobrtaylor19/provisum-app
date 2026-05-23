@@ -6,7 +6,7 @@ This document describes the system design, technical decisions, and component ar
 
 ## System Overview
 
-Provisum is a Next.js 14 web application that automates enterprise role migration workflows. The system ingests source user data and role hierarchies, uses Claude AI to cluster users into security personas, maps those personas to target roles, performs SOD conflict analysis, and routes the results through a structured approval workflow. It also includes an AI chatbot (Lumen), 3-phase SOD triage, risk quantification, feature flags, webhooks, scheduled exports, multi-tenant organization support, migration health dashboard, incident detection with AI triage, SOX evidence packages, and AI-assisted mapping suggestions. **Current version: v1.1.0** (55 tables, 51 pages, 92+ API routes).
+Provisum is a Next.js 14 web application that automates enterprise role migration workflows. The system ingests source user data and role hierarchies, uses Claude AI to cluster users into security personas, maps those personas to target roles, performs SOD conflict analysis, and routes the results through a structured approval workflow. It also includes an AI chatbot (Lumen), 3-phase SOD triage, risk quantification, feature flags, webhooks, scheduled exports, multi-tenant organization support, migration health dashboard, incident detection with AI triage, SOX evidence packages, and AI-assisted mapping suggestions. **Current version: v1.5.0** (60 tables — 57 live + 3 append-only history, 51+ pages, 92+ API routes).
 
 ```
 ┌─────────────┐      ┌──────────────┐      ┌──────────┐      ┌────────────┐      ┌──────────┐
@@ -150,7 +150,7 @@ export async function getDashboardStats(userId?: number) {
 
 ### 4. Data Access Layer (Drizzle + Supabase Postgres)
 
-**Schema** (`db/schema.ts`): Single source of truth for all 55 tables. Drizzle ORM maps TypeScript types to SQL using `pgTable` from `drizzle-orm/pg-core`.
+**Schema** (`db/schema.ts`): Single source of truth for all 60 tables (57 live + 3 append-only history). Drizzle ORM maps TypeScript types to SQL using `pgTable` from `drizzle-orm/pg-core`.
 
 ```typescript
 export const users = pgTable("users", {
