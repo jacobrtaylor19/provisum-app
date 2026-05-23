@@ -19,7 +19,7 @@ This file gives Claude Code the context needed to work effectively in this codeb
 
 **Never fabricate.** Every work item must trace to a commit, conversation, or codebase signal.
 
-**Active strategic-refresh handoff (2026-05-23):** `docs/strategy/HANDOFF_2026-05-23_strategic_refresh.md` — read first if this is a session after the 2026-05-23 due-diligence pass. Contains locked editorial calls (commercial model is Option D modular hybrid, no public Deloitte naming, pre-revenue customer status, Cursus deferred), three workstreams with what's executable vs deferred, and first-action sequencing. Supporting source-of-truth docs in `docs/strategy/`.
+**Active strategic-refresh handoff (2026-05-23):** `docs/strategy/HANDOFF_2026-05-23_strategic_refresh.md` — read first if this is a session after the 2026-05-23 due-diligence pass. Contains locked editorial calls (commercial model is Option D modular hybrid, no public Big-Four partner naming, pre-revenue customer status, Cursus deferred), three workstreams with what's executable vs deferred, and first-action sequencing. Supporting source-of-truth docs in `docs/strategy/`.
 
 ---
 
