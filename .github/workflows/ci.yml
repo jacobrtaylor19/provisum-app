@@ -19,6 +19,13 @@ jobs:
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm build
+        env:
+          # Placeholder values so validateEnv() passes during the CI build.
+          # The build never connects to these — DB is lazily initialized and
+          # force-dynamic pages are not prerendered. Real secrets live in Vercel.
+          PROVISUM_ENV: production
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
 
   security-scan:
     runs-on: ubuntu-latest
