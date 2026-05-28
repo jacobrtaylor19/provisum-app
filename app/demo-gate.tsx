@@ -3,11 +3,6 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 
-function getCookie(name: string): string | null {
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  return match ? decodeURIComponent(match[2]) : null;
-}
-
 function setCookie(name: string, value: string, days: number) {
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
   document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
@@ -25,7 +20,10 @@ export function DemoGate({ children }: { children: ReactNode }) {
   const [role, setRole] = useState("");
 
   useEffect(() => {
-    setHasAccess(getCookie("provisum_demo_lead") === "1");
+    // Lead-capture gate temporarily bypassed — every visitor goes straight to the demo.
+    // To restore the gate: setHasAccess(getCookie("provisum_demo_lead") === "1");
+    // (and re-add the getCookie helper removed above).
+    setHasAccess(true);
   }, []);
 
   // Show nothing during hydration check

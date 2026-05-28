@@ -18,6 +18,7 @@ Resolved via `pnpm.overrides` / direct bump — no suppression:
 | `glob` (via eslint-config-next) | GHSA-5j98-mcp5-4vw2 | override `>=10.5.0` |
 | `fast-uri` (via @sentry/nextjs) | GHSA-q3j6-qgpj-74h6, GHSA-v39h-62p7-jpjc | override `>=3.1.2` |
 | `path-to-regexp` (via shadcn>MCP sdk>express) | GHSA-j3q9-mxjg-w52f | override `>=8.4.0` |
+| `tmp` (via exceljs) | GHSA-ph9p-34f9-6g65 (path traversal) | override `>=0.2.6` (added 2026-05-28) |
 
 ## Allowlisted
 
