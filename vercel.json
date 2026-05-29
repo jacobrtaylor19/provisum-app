@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/exports",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/sod-monitor",
+      "schedule": "0 6 * * 1"
     }
   ]
 }

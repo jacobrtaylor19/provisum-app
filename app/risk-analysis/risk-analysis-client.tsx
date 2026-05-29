@@ -10,12 +10,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertTriangle, Shield, TrendingUp, TrendingDown, Users, ShieldCheck, ArrowUpDown } from "lucide-react";
+import { AlertTriangle, Shield, TrendingUp, TrendingDown, Users, ShieldCheck, ArrowUpDown, GitCompareArrows } from "lucide-react";
 import type { AggregateRiskAnalysis } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
+export interface PolicyDriftAlert {
+  id: number;
+  targetRoleId: number | null;
+  roleName: string;
+  roleExternalId: string | null;
+  detail: string;
+  affectedMappingCount: number | null;
+  detectedAt: string;
+}
+
 interface Props {
   risk: AggregateRiskAnalysis;
+  policyDrift?: PolicyDriftAlert[];
 }
 
 function riskLevel(value: number, thresholds: [number, number]): "low" | "medium" | "high" {
@@ -37,7 +48,7 @@ function RiskBadge({ level }: { level: "low" | "medium" | "high" }) {
   );
 }
 
-export function RiskAnalysisClient({ risk }: Props) {
+export function RiskAnalysisClient({ risk, policyDrift = [] }: Props) {
   const [showAdoptionDrill, setShowAdoptionDrill] = useState(false);
   const [adoptionFilter, setAdoptionFilter] = useState<"all" | "gained" | "reduced">("all");
   const router = useRouter();
@@ -180,6 +191,55 @@ export function RiskAnalysisClient({ risk }: Props) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Policy Drift (#42) — roles whose permission set changed since approval */}
+      {policyDrift.length > 0 && (
+        <Card className="border-yellow-200">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+                <GitCompareArrows className="h-4 w-4 text-yellow-600" />
+                Policy Drift
+              </CardTitle>
+              <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-200">
+                {policyDrift.length} role{policyDrift.length === 1 ? "" : "s"} drifted
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              These approved roles have a different permission set than when they were
+              approved. Review each change and accept or dismiss it in Security Design.
+            </p>
+            <div className="space-y-2">
+              {policyDrift.map((d) => (
+                <div key={d.id} className="rounded-md border p-3 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-medium text-foreground">
+                      {d.roleName}
+                      {d.roleExternalId ? (
+                        <span className="ml-1 text-xs text-muted-foreground">({d.roleExternalId})</span>
+                      ) : null}
+                    </span>
+                    {d.affectedMappingCount ? (
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {d.affectedMappingCount} assignment{d.affectedMappingCount === 1 ? "" : "s"} affected
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{d.detail}</p>
+                </div>
+              ))}
+            </div>
+            <a
+              href="/admin/security-design"
+              className="inline-block text-xs text-teal-600 font-medium hover:underline"
+            >
+              Review in Security Design &rarr;
+            </a>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Analysis Overview */}
       <Card>

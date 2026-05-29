@@ -186,6 +186,11 @@ export const targetRoles = pgTable("target_roles", {
   source: text("source").notNull().default("uploaded"), // uploaded | ai_generated | manual
   approvedBy: integer("approved_by"),
   approvedAt: text("approved_at"),
+  // Policy-drift baseline (#42): permission set captured at approval, used to detect
+  // post-approval changes. Hash is sha256 of the sorted permissionId list; snapshot is
+  // the JSON array of permissionIds. Null = no baseline yet (set on first approval/scan).
+  approvedPermissionHash: text("approved_permission_hash"),
+  approvedPermissionSnapshot: text("approved_permission_snapshot"),
   updatedAt: text("updated_at").$defaultFn(() => new Date().toISOString()),
   updatedBy: integer("updated_by"),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
