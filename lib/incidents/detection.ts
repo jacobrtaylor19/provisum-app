@@ -14,7 +14,7 @@ import { notifyUsersWithRoles } from "@/lib/notifications";
 import { triageIncident } from "@/lib/incidents/triage";
 
 type Severity = "critical" | "high" | "medium" | "low";
-type IncidentSource = "sentry" | "health_check" | "job_failure" | "webhook_failure" | "manual";
+type IncidentSource = "sentry" | "health_check" | "job_failure" | "webhook_failure" | "manual" | "sod_monitor";
 
 interface DetectIncidentParams {
   title: string;

@@ -7,6 +7,7 @@ import { getOrgId } from "@/lib/org-context";
 import { auditLog } from "@/lib/audit";
 import { safeError } from "@/lib/errors";
 import { notifyUsersWithRoles } from "@/lib/notifications";
+import { captureApprovalSnapshot } from "@/lib/policy-drift";
 
 export const dynamic = "force-dynamic";
 
@@ -33,10 +34,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: "Only draft roles can be approved" }, { status: 400 });
     }
 
+    // Capture the permission-set baseline for policy-drift detection (#42).
+    const { hash: approvedPermissionHash, snapshot: approvedPermissionSnapshot } =
+      await captureApprovalSnapshot(roleId);
+
     await db.update(schema.targetRoles).set({
       status: "active",
       approvedBy: user.id,
       approvedAt: new Date().toISOString(),
+      approvedPermissionHash,
+      approvedPermissionSnapshot,
       updatedAt: new Date().toISOString(),
       updatedBy: user.id,
     }).where(eq(schema.targetRoles.id, roleId));
