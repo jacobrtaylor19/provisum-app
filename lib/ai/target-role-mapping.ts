@@ -3,6 +3,8 @@ import * as schema from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getAIProvider } from "@/lib/ai/provider";
 import { buildSystemContextPrompt } from "@/lib/ai/system-context";
+import { getSetting } from "@/lib/settings";
+import { gatewayGenerateText } from "@/lib/ai/gateway-provider";
 
 function buildMappingPrompt(
   persona: { name: string; description: string | null; businessFunction: string | null },
@@ -45,7 +47,12 @@ interface MappingResult {
 const BATCH_SIZE = 5; // Process 5 personas concurrently
 
 export async function runTargetRoleMapping(jobId: number): Promise<{ personasMapped: number; totalMappings: number }> {
-  const provider = await getAIProvider();
+  // Gateway adoption (B2 pivot): when ai.target_role_mapping_via_gateway is "true",
+  // route the per-persona ranking through Vercel AI Gateway with feature-specific tags.
+  // Default off — falls back to the legacy getAIProvider() path.
+  const viaGateway = (await getSetting("ai.target_role_mapping_via_gateway")) === "true";
+  const gatewayModel = (await getSetting("ai.gateway_model")) || "anthropic/claude-sonnet-4.6";
+  const provider = viaGateway ? null : await getAIProvider();
   const personas = await db.select().from(schema.personas);
   const targetRoles = await db.select().from(schema.targetRoles);
 
@@ -84,7 +91,17 @@ export async function runTargetRoleMapping(jobId: number): Promise<{ personasMap
     const results = await Promise.allSettled(
       batch.map(async (persona) => {
         const prompt = buildMappingPrompt(persona, targetRoles, systemContext);
-        const text = await provider.generateText(prompt);
+        let text: string;
+        if (viaGateway) {
+          const result = await gatewayGenerateText({
+            prompt,
+            model: gatewayModel,
+            tags: ["feature:target-role-mapping", "env:provisum-runtime"],
+          });
+          text = result.text;
+        } else {
+          text = await provider!.generateText(prompt);
+        }
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error("no_json");
         const result: MappingResult = JSON.parse(jsonMatch[0]);
