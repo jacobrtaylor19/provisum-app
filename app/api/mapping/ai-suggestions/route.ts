@@ -6,6 +6,7 @@ import * as schema from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { generateAIMappingSuggestions } from "@/lib/ai/mapping-suggestions";
 import { reportError } from "@/lib/monitoring";
+import { checkAIRate } from "@/lib/rate-limit-middleware";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -20,6 +21,11 @@ export async function GET(req: NextRequest) {
   if (!ALLOWED_ROLES.includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  // Engine PRD §13: inference routes require auth + rate limiting before any
+  // model router is exposed. This route calls Claude via generateAIMappingSuggestions.
+  const rateLimited = await checkAIRate(req, String(user.id));
+  if (rateLimited) return rateLimited;
 
   const personaIdParam = req.nextUrl.searchParams.get("personaId");
   if (!personaIdParam) {

@@ -13,6 +13,38 @@ export interface AuditEntry {
   actorRole?: string;
   ipAddress?: string;
   metadata?: Record<string, unknown>;
+  /**
+   * Phase 0 provenance extensions (Engine PRD §10). All optional —
+   * existing callers continue to work without changes. New callers
+   * (the gate, the rules engine) supply these so every decision is
+   * reconstructible from its pinned versions and recorded evidence.
+   *
+   * `decisionType` is "rule" (rule-determined), "inference" (model
+   * judgment), or "human" (mapper/approver action).
+   *
+   * `evidence` cites the basis: the fingerprint match, the usage that
+   * justified least privilege, the rule that fired.
+   *
+   * `rationale` is a human-readable explanation for the decision.
+   *
+   * `confidence` is the composite + its component signals.
+   *
+   * `versions` pins model/rule-pack/dataset so the decision is reproducible.
+   */
+  provenance?: {
+    decisionType?: "rule" | "inference" | "human";
+    evidence?: Record<string, unknown>;
+    rationale?: string;
+    confidence?: {
+      composite?: number;
+      components?: Record<string, number>;
+    };
+    versions?: {
+      model?: string;
+      rulePack?: string;
+      dataset?: string;
+    };
+  };
 }
 
 /**
@@ -30,6 +62,13 @@ export interface AuditEntry {
  */
 export async function auditLog(entry: AuditEntry): Promise<void> {
   try {
+    // Phase 0 provenance: fold the structured `provenance` block into the
+    // existing `metadata` column. Schema unchanged — backward compatible.
+    const combinedMetadata =
+      entry.metadata || entry.provenance
+        ? { ...(entry.metadata ?? {}), ...(entry.provenance ? { provenance: entry.provenance } : {}) }
+        : null;
+
     await db.insert(schema.auditLog).values({
       organizationId: entry.organizationId,
       entityType: entry.entityType,
@@ -39,7 +78,7 @@ export async function auditLog(entry: AuditEntry): Promise<void> {
       newValue: entry.newValue ?? null,
       actorEmail: entry.actorEmail,
       ipAddress: entry.ipAddress ?? null,
-      metadata: entry.metadata ? JSON.stringify(entry.metadata) : null,
+      metadata: combinedMetadata ? JSON.stringify(combinedMetadata) : null,
     });
   } catch (err) {
     // Audit logging should never break the main operation
