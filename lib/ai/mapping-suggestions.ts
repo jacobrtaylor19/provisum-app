@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getSetting } from "@/lib/settings";
+import { gatewayGenerateText } from "@/lib/ai/gateway-provider";
 
 // ─── Types ───
 
@@ -50,12 +51,22 @@ export async function generateAIMappingSuggestions(
   existingMappings: ExistingMappingInput[],
   overlapScores: OverlapScoreInput[]
 ): Promise<AIMappingSuggestion[]> {
-  const apiKey = (await getSetting("ai.apiKey")) || process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("Anthropic API key not configured");
+  // Gateway adoption (B2 pivot): when ai.mapping_suggestions_via_gateway is "true",
+  // route through Vercel AI Gateway for cost tracking + observability. Default false
+  // so prod behavior is unchanged until the setting is flipped.
+  const viaGateway = (await getSetting("ai.mapping_suggestions_via_gateway")) === "true";
+
+  // Resolve API key only when we're NOT going through the gateway (gateway uses OIDC).
+  let apiKey: string | undefined;
+  if (!viaGateway) {
+    apiKey = (await getSetting("ai.apiKey")) || process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error("Anthropic API key not configured");
+    }
   }
 
   const model = (await getSetting("ai.model")) || "claude-sonnet-4-20250514";
+  const gatewayModel = (await getSetting("ai.gateway_model")) || "anthropic/claude-sonnet-4.6";
 
   // Take the top 15 candidates by overlap to keep prompt size reasonable
   const topCandidates = [...overlapScores]
@@ -99,16 +110,28 @@ Always return valid JSON. No markdown fences, no explanation outside the JSON.`;
 
   const userPrompt = buildUserPrompt(persona, sourceRoles, candidateDetails, existingMappings, acceptanceByRole);
 
-  const client = new Anthropic({ apiKey });
-
-  const response = await client.messages.create({
-    model,
-    max_tokens: 4096,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userPrompt }],
-  });
-
-  const text = response.content[0]?.type === "text" ? response.content[0].text : "";
+  let text: string;
+  if (viaGateway) {
+    const result = await gatewayGenerateText({
+      prompt: userPrompt,
+      system: systemPrompt,
+      model: gatewayModel,
+      tags: ["feature:mapping-suggestions", "env:provisum-runtime"],
+    });
+    text = result.text;
+  } else {
+    // Legacy direct-Anthropic path. Kept as default for backward compatibility.
+    // Flip ai.mapping_suggestions_via_gateway = "true" in settings to migrate this
+    // call site onto the Gateway (Engine PRD §13 observability + cost tracking).
+    const client = new Anthropic({ apiKey: apiKey! });
+    const response = await client.messages.create({
+      model,
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }],
+    });
+    text = response.content[0]?.type === "text" ? response.content[0].text : "";
+  }
 
   return parseAIResponse(text, topCandidates, acceptanceByRole);
 }
