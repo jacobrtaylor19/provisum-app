@@ -1,4 +1,4 @@
-import { pgTable, text, integer, real, serial, boolean, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, serial, boolean, uuid, jsonb } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // ─────────────────────────────────────────────
@@ -1003,6 +1003,20 @@ export const mappingFeedback = pgTable("mapping_feedback", {
   createdBy: integer("created_by").references(() => appUsers.id),
   organizationId: integer("organization_id").notNull().references(() => organizations.id),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  // B4 live additions — both NULLABLE for backward compat with existing rows.
+  // canonical_snapshot: the engine's view of the person at decision time.
+  //                     Shape: CanonicalPersonRecordJson (see airm/lib/learning/correction-record.ts).
+  // correction_metadata: the full CorrectionRecord metadata block when a structured
+  //                     correction is written via /api/learning/corrections.
+  //                     Shape: CorrectionRecord["correction_metadata"].
+  // verification_status: 'pending' | 'verified' | 'rejected' (Engine PRD §11 governance).
+  // weight: training weight; rejected = 2.0, accepted = 1.0 (PRD §14 above-synthetic).
+  // engagementId: optional project tag inside an org.
+  canonicalSnapshot: jsonb("canonical_snapshot"),
+  correctionMetadata: jsonb("correction_metadata"),
+  verificationStatus: text("verification_status").default("pending"),
+  weight: real("weight").default(2.0),
+  engagementId: text("engagement_id"),
 });
 
 // ─────────────────────────────────────────────
