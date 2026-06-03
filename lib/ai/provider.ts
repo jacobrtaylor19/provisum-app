@@ -189,6 +189,20 @@ export async function getAIProvider(): Promise<AIProvider> {
     case "aws_bedrock":
       return new BedrockProvider();
 
+    case "gateway":
+    case "vercel-gateway":
+    case "vercel_ai_gateway": {
+      // Lazy import — AI SDK is a runtime dependency only when the gateway is selected.
+      // Falls back to the model the caller configured in `ai.model` or the
+      // Vercel-recommended Sonnet default if unset.
+      const { GatewayProvider } = await import("./gateway-provider");
+      const tag = (await getSetting("ai.gatewayTag")) || process.env.AI_GATEWAY_TAG || undefined;
+      return new GatewayProvider({
+        model: model || "anthropic/claude-sonnet-4.6",
+        tags: tag ? [tag] : ["env:provisum-runtime"],
+      });
+    }
+
     case "manual":
     case "none":
     case "disabled":
