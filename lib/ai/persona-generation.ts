@@ -107,7 +107,14 @@ interface GenerationResult {
 }
 
 export async function runPersonaGeneration(jobId: number): Promise<{ personasCreated: number; usersAssigned: number }> {
-  const provider = await getAIProvider();
+  // Gateway adoption (B2 pivot): same setting-gated dual path as target-role-mapping
+  // and mapping-suggestions. Default OFF; flip ai.persona_generation_via_gateway = "true"
+  // per environment to migrate this call site onto the Gateway.
+  const { getSetting } = await import("@/lib/settings");
+  const { gatewayGenerateText } = await import("@/lib/ai/gateway-provider");
+  const viaGateway = (await getSetting("ai.persona_generation_via_gateway")) === "true";
+  const gatewayModel = (await getSetting("ai.gateway_model")) || "anthropic/claude-sonnet-4.6";
+  const provider = viaGateway ? null : await getAIProvider();
   const allUsers = await db.select().from(schema.users);
   const profiles = await loadUserProfiles(allUsers);
 
@@ -123,7 +130,17 @@ export async function runPersonaGeneration(jobId: number): Promise<{ personasCre
 
   const prompt = buildPrompt(profiles, systemContext);
 
-  const text = await provider.generateText(prompt);
+  let text: string;
+  if (viaGateway) {
+    const result = await gatewayGenerateText({
+      prompt,
+      model: gatewayModel,
+      tags: ["feature:persona-generation", "env:provisum-runtime"],
+    });
+    text = result.text;
+  } else {
+    text = await provider!.generateText(prompt);
+  }
   // Extract JSON from response (may be wrapped in markdown code block)
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error("Failed to parse AI response — no JSON found");
@@ -268,7 +285,7 @@ export async function runPersonaGeneration(jobId: number): Promise<{ personasCre
         consolidatedGroupId: groupId,
         confidenceScore: confidence,
         aiReasoning: `Matched to "${bestPersona.name}" by ${bestScore > 0 ? "permission overlap" : "department"} (${dept || "unspecified"})`,
-        aiModel: provider.name,
+        aiModel: viaGateway ? `gateway:${gatewayModel}` : provider!.name,
         assignmentMethod: "ai_generation",
         jobRunId: jobId,
       });
