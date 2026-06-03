@@ -1,3 +1,12 @@
+// ──────────────────────────────────────────────────────────────────────
+// LUMEN — Claude-direct, deliberately NOT routed through Vercel AI Gateway.
+// Decision (Jun 2026): Lumen is a Claude-focused feature. Its multi-turn +
+// tool-using shape (LUMEN_TOOLS) benefits from the Anthropic SDK directly
+// and from Claude-specific affordances (deep tool-call fidelity, computer
+// use, future prompt caching). Reasoning routes that DO go through Gateway:
+// persona-generation, target-role-mapping, mapping-suggestions.
+// Don't migrate this route to gateway without explicit product approval.
+// ──────────────────────────────────────────────────────────────────────
 import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getSetting } from "@/lib/settings";
