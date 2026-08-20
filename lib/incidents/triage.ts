@@ -116,6 +116,9 @@ Respond with ONLY valid JSON (no markdown, no code blocks) in this exact format:
     const response = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 512,
+      // Thinking is on by default for this model; with a tight 512-token
+      // budget it can consume the whole thing before any text is produced.
+      thinking: { type: "disabled" },
       messages: [{ role: "user", content: prompt }],
     });
 

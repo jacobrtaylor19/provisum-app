@@ -26,12 +26,22 @@ export class AnthropicProvider implements AIProvider {
     const response = await client.messages.create({
       model: this.model,
       max_tokens: 16384,
+      // These call sites expect plain text (usually JSON) back and parse it
+      // synchronously. Claude Sonnet 5 runs adaptive thinking by default when
+      // `thinking` is omitted, which prepends a `thinking` block to
+      // `response.content` — silently breaking any caller that assumed
+      // `content[0]` was the text block. Disable thinking here to keep this
+      // shared utility fast and its output shape predictable.
+      thinking: { type: "disabled" },
       ...(systemPrompt ? { system: systemPrompt } : {}),
       messages,
     });
 
-    const block = response.content[0];
-    return block.type === "text" ? block.text : "";
+    // Defensive: find the first text block rather than assuming content[0]
+    // is text — thinking/redacted_thinking blocks (or future block types)
+    // can precede it even with thinking disabled in edge cases.
+    const block = response.content.find((b) => b.type === "text");
+    return block?.type === "text" ? block.text : "";
   }
 }
 

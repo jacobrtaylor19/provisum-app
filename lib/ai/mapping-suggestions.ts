@@ -127,10 +127,15 @@ Always return valid JSON. No markdown fences, no explanation outside the JSON.`;
     const response = await client.messages.create({
       model,
       max_tokens: 4096,
+      // Claude Sonnet 5 runs adaptive thinking by default when `thinking` is
+      // omitted, which prepends a `thinking` block ahead of the text block —
+      // disable it so content[0] stays the plain-JSON text block this parser expects.
+      thinking: { type: "disabled" },
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
     });
-    text = response.content[0]?.type === "text" ? response.content[0].text : "";
+    const textBlock = response.content.find((b) => b.type === "text");
+    text = textBlock?.type === "text" ? textBlock.text : "";
   }
 
   return parseAIResponse(text, topCandidates, acceptanceByRole);
