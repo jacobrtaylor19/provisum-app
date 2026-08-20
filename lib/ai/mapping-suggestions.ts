@@ -65,7 +65,7 @@ export async function generateAIMappingSuggestions(
     }
   }
 
-  const model = (await getSetting("ai.model")) || "claude-sonnet-4-20250514";
+  const model = (await getSetting("ai.model")) || "claude-sonnet-5";
   const gatewayModel = (await getSetting("ai.gateway_model")) || "anthropic/claude-sonnet-4.6";
 
   // Take the top 15 candidates by overlap to keep prompt size reasonable

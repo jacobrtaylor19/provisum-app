@@ -810,7 +810,7 @@ async function runSeed(db: ReturnType<typeof drizzle>, readCsvFn: <T>(f: string)
     { key: "project.organization", value: "" },
     { key: "ai.provider", value: "claude" },
     { key: "ai.apiKey", value: "" },
-    { key: "ai.model", value: "claude-sonnet-4-20250514" },
+    { key: "ai.model", value: "claude-sonnet-5" },
     { key: "ai.confidenceThreshold", value: "85" },
     { key: "workflow.autoApprove", value: "false" },
     { key: "workflow.approvalLevels", value: "single" },

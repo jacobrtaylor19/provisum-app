@@ -15,7 +15,7 @@ export class AnthropicProvider implements AIProvider {
 
   constructor(apiKey: string, model?: string) {
     this.apiKey = apiKey;
-    this.model = model || "claude-sonnet-4-20250514";
+    this.model = model || "claude-sonnet-5";
   }
 
   async generateText(prompt: string, systemPrompt?: string): Promise<string> {

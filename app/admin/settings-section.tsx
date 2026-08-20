@@ -143,11 +143,11 @@ const providerNeedsKey = (provider: string) =>
 const defaultModelForProvider = (provider: string) => {
   switch (provider) {
     case "anthropic":
-      return "claude-sonnet-4-20250514";
+      return "claude-sonnet-5";
     case "azure_openai":
       return "gpt-4o";
     case "aws_bedrock":
-      return "anthropic.claude-sonnet-4-20250514-v1:0";
+      return "anthropic.claude-sonnet-5";
     case "ollama":
       return "llama3";
     default:

@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const model = await getSetting("ai.model") || "claude-sonnet-4-20250514";
+  const model = await getSetting("ai.model") || "claude-sonnet-5";
 
   const dataContext = await getLumenDataContext(user);
   const ragContext = buildRagContext(message, context?.page || "unknown");
