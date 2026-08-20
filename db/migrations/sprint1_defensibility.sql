@@ -110,7 +110,9 @@ COMMENT ON FUNCTION prevent_audit_log_mutation() IS
 -- org_id sourcing:
 --   - user_persona_assignments: no direct org_id column; look up via users table
 --   - persona_target_role_mappings: no direct org_id column; look up via personas table
---   - sod_conflicts: direct organization_id column
+--   - sod_conflicts: no direct org_id column either; look up via users table
+--     (this comment previously claimed a direct column — it never existed;
+--     fixed 2026-08-20, see capture_sod_conflict_history() below)
 --
 -- changed_by: reads the session variable 'provisum.actor' if set by the
 --   application (SET LOCAL provisum.actor = 'user@example.com'). Falls back
@@ -198,15 +200,23 @@ RETURNS TRIGGER AS $$
 DECLARE
   v_row   sod_conflicts;
   v_actor text;
+  v_org   integer;
 BEGIN
   v_row   := CASE TG_OP WHEN 'DELETE' THEN OLD ELSE NEW END;
   v_actor := COALESCE(current_setting('provisum.actor', true), 'system');
+
+  -- sod_conflicts has no direct organization_id column (unlike the comment
+  -- above claimed) — resolve org via the conflicting user, same pattern as
+  -- the user_persona_assignments trigger above. Fixed 2026-08-20: the prior
+  -- version referenced v_row.organization_id directly, which doesn't exist
+  -- on this table and made every insert/update/delete on sod_conflicts fail.
+  SELECT organization_id INTO v_org FROM users WHERE id = v_row.user_id LIMIT 1;
 
   INSERT INTO sod_conflicts_history (
     original_row_id, org_id, snapshot_json, changed_by, changed_at, change_kind
   ) VALUES (
     v_row.id,
-    COALESCE(v_row.organization_id, 0),
+    COALESCE(v_org, 0),
     to_json(v_row)::text,
     v_actor,
     to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
