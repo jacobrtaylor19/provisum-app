@@ -265,14 +265,6 @@ export default async function Home() {
             Sign In to Demo
             <ArrowRight className="h-4 w-4" />
           </Link>
-          <a
-            href="https://provisum.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-lg border border-slate-600 px-6 py-3 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
-          >
-            Visit provisum.io
-          </a>
         </div>
       </section>
 
